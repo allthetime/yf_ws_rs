@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package yaticker;
 
-message yaticker {
+message Yaticker {
 
 enum QuoteType {
     NONE = 0;
