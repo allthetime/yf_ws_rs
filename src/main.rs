@@ -4,6 +4,8 @@ use serde_json::{json, Map, Value};
 use tungstenite::http::Uri;
 use tungstenite::{connect, Message};
 
+use base64::prelude::*;
+
 const YAHOO_FINANCE_WEBSOCKET_URL: &str = "wss://streamer.finance.yahoo.com/";
 const TICKER_SYMBOLS: [&str; 1] = ["AAPL"];
 
@@ -31,16 +33,26 @@ fn main() {
 
     loop {
         let msg = socket.read().unwrap();
-        if let Message::Text(txt) = msg {
-            match Yaticker::decode(txt.as_bytes()) {
-                Ok(yaticker) => {
-                    println!("Received Yaticker: {:?}", yaticker);
-                }
-                Err(e) => {
-                    print!("Error decoding Yaticker: ");
-                    dbg!(e);
+
+        match msg {
+            Message::Text(txt) => {
+                let decoded = BASE64_STANDARD.decode(txt.as_bytes()).unwrap();
+                match Yaticker::decode(decoded.as_slice()) {
+                    Ok(yaticker) => {
+                        print!("Received Yaticker: ");
+                        dbg!(yaticker);
+                    }
+                    Err(e) => {
+                        print!("Error decoding Yaticker: ");
+                        dbg!(e);
+                    }
                 }
             }
+            Message::Binary(bin) => (),
+            Message::Ping(ping) => (),
+            Message::Pong(pong) => (),
+            Message::Close(close) => (),
+            Message::Frame(frame) => (),
         }
     }
 }
