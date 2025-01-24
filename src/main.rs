@@ -1,7 +1,7 @@
 // use openssl::ssl::SslStream;
 use prost::Message as ProstMessage;
 use serde_json::{json, Map, Value};
-use tungstenite::http::{response, Uri};
+use tungstenite::http::Uri;
 use tungstenite::{connect, Message};
 
 const YAHOO_FINANCE_WEBSOCKET_URL: &str = "wss://streamer.finance.yahoo.com/";
@@ -24,47 +24,23 @@ fn main() {
     let uri: Uri = YAHOO_FINANCE_WEBSOCKET_URL.parse().unwrap();
 
     let (mut socket, response) = connect(uri).expect("Failed to connect");
-
-    dbg!(response);
-
     let subscription_json = build_subscription_object(TICKER_SYMBOLS.to_vec());
     let msg = Message::Text(subscription_json.to_string().into());
-
-    dbg!(&msg);
-
-    dbg!(Yaticker::default());
 
     socket.send(msg).unwrap();
 
     loop {
         let msg = socket.read().unwrap();
-        match msg {
-            Message::Text(txt) => {
-                println!("Received TXT: {}", txt);
-                match Yaticker::decode(txt.as_bytes()) {
-                    Ok(yaticker) => {
-                        println!("Received Yaticker: {:?}", yaticker);
-                    }
-                    Err(e) => {
-                        print!("Error decoding Yaticker: ");
-                        dbg!(e);
-                    }
+        if let Message::Text(txt) = msg {
+            match Yaticker::decode(txt.as_bytes()) {
+                Ok(yaticker) => {
+                    println!("Received Yaticker: {:?}", yaticker);
+                }
+                Err(e) => {
+                    print!("Error decoding Yaticker: ");
+                    dbg!(e);
                 }
             }
-            Message::Binary(bin) => {
-                println!("Received BIN: {:?}", bin);
-            }
-            Message::Ping(ping) => {
-                println!("Received: Ping {:?}", ping);
-            }
-            Message::Pong(pong) => {
-                println!("Received: Pong {:?}", pong);
-            }
-            Message::Close(close) => {
-                println!("Received: Close {:?}", close);
-                break;
-            }
-            Message::Frame(frame) => todo!(),
         }
     }
 }
