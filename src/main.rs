@@ -10,7 +10,7 @@ pub mod yaticker {
 use yaticker::Yaticker;
 
 const YAHOO_FINANCE_WEBSOCKET_URL: &str = "wss://streamer.finance.yahoo.com/";
-const TICKER_SYMBOLS: [&str; 1] = ["BTC-USD"];
+const TICKER_SYMBOLS: [&str; 1] = ["BTC-CAD"];
 
 struct Heart {
     timestamp: std::time::Instant,
@@ -44,7 +44,9 @@ fn subscribe_to_tickers(socket: &mut TungsteniteSocket) {
 }
 
 fn connect_socket(uri: Uri) -> TungsteniteSocket {
-    let (socket, _response) = connect(uri).expect("Connection Failure");
+    let (socket, response) = connect(uri).expect("Connection Failure");
+    print!("Connected to Yahoo Finance WebSocket: ");
+    dbg!(response);
     socket
 }
 
