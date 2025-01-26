@@ -1,6 +1,9 @@
+use std::io::Read;
+
 use base64::prelude::*;
 use prost::Message as ProstMessage;
 use serde_json::{json, Map, Value};
+use streamz::streamer;
 use tungstenite::http::Uri;
 use tungstenite::{connect, Message};
 
@@ -30,6 +33,7 @@ impl Heart {
 type TungsteniteSocket =
     tungstenite::WebSocket<tungstenite::stream::MaybeTlsStream<std::net::TcpStream>>;
 
+
 fn build_subscription_json() -> Value {
     let mut map = Map::new();
     let ticker_symbols_json = json!(TICKER_SYMBOLS);
@@ -52,12 +56,17 @@ fn connect_socket(uri: Uri) -> TungsteniteSocket {
 
 fn main() {
     let uri: Uri = YAHOO_FINANCE_WEBSOCKET_URL.parse().unwrap();
-
     let mut socket: TungsteniteSocket = connect_socket(uri);
-
     subscribe_to_tickers(&mut socket);
-
     let mut heart: Heart = Heart::new();
+
+    let streamer = streamer::Streamer {
+        stream: socket,
+        transformer: Box::new(|msg| {
+            print!("Received Message: ");
+            dbg!(msg);
+        }),
+    }
 
     // poll socket
     // TODO: make this async
